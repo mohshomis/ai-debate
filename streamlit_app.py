@@ -2,7 +2,7 @@ import streamlit as st
 import time
 from backend import perform_interaction, Agent
 
-st.title("AI Agent Interaction")
+st.title("ai agents debate platform")
 
 if 'page' not in st.session_state:
     st.session_state.page = "main"
