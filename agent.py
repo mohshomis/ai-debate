@@ -9,122 +9,184 @@ class Agent:
         self.company = company
         self.model = model
         self.character = character
+        self.votes = []  # track votes received
 
     def generate_response(self, query):
-        prompt = f"You are a {self.character}. {query} Respond in no more than three lines, without bullet points or full explanations. Speak informally, as if you are an individual having a casual conversation with another individual. Directly address the other agent's points."
+        prompt = (
+            f"You are a {self.character}. {query} , be an indivisual and have your own openion and be free to say what you think is true don't care about the other person feeling , make sure your point is clearly explain and try to provide storng argument"
+            f"Respond in no more than two lines, without bullet points or full explanations. "
+            f"Speak informally, as if you are an individual having a casual conversation. "
+            f"Directly address the other agent's points."
+        )
+
         if self.company == "OpenAI":
             openai.api_key = self.api_key
-            response = openai.completions.create(
+            response = openai.Completion.create(
                 model=self.model,
                 prompt=prompt,
                 max_tokens=50
             )
-            return response.choices[0].text.strip()
+            return response.choices[0].text
+
         elif self.company == "Anthropic":
-            anthropic_client = anthropic.Anthropic(api_key=self.api_key)
-            response = anthropic_client.completions.create(
-                model=self.model,
+            anthropic_client = anthropic.Client(api_key=self.api_key)
+            response = anthropic_client.completion(
                 prompt=f"{anthropic.HUMAN_PROMPT} {prompt} {anthropic.AI_PROMPT}",
+                model=self.model,
                 max_tokens_to_sample=50
             )
-            return response.completion.strip()
+            return response["completion"]
+
         elif self.company == "Gemini":
             genai.configure(api_key=self.api_key)
             model = genai.GenerativeModel(self.model)
-            response = model.generate_content(prompt, generation_config={"max_output_tokens": 50})
-            if response and hasattr(response, 'parts'):
-                text_parts = [part.text for part in response.parts if hasattr(part, 'text') and part.text]
-                if text_parts:
-                    return " ".join(text_parts).strip()
-            return "Response blocked due to safety reasons or no text was generated."
+            response = model.generate_content(
+                prompt,
+                generation_config = { "max_output_tokens": 50 }
+            )
+            if response and hasattr(response, "text"):
+                return response.text
+            return "Response blocked or no text generated."
+
         else:
             return f"Error: Unsupported company {self.company}"
 
-    def critique(self, response):
+    def critique(self, last_response):
+        prompt = (
+            f"What are the flaws and weaknesses in the following argument: {last_response}? "
+            f"Respond in no more than two lines, without bullet points or full explanations. "
+            f"Speak informally, as if you are an individual having a casual conversation. "
+            f"Directly address the other agent's points."
+        )
+
         if self.company == "OpenAI":
             openai.api_key = self.api_key
-            response = openai.completions.create(
+            response = openai.Completion.create(
                 model=self.model,
-                prompt=f"What are the flaws and weaknesses in the following argument: {response}? Respond in no more than three lines, without bullet points or full explanations. Speak informally, as if you are an individual having a casual conversation with another individual. Directly address the other agent's points.",
+                prompt=prompt,
                 max_tokens=40
             )
-            return response.choices[0].text.strip()
+            return response.choices[0].text
+
         elif self.company == "Anthropic":
-            anthropic_client = anthropic.Anthropic(api_key=self.api_key)
-            response = anthropic_client.completions.create(
+            anthropic_client = anthropic.Client(api_key=self.api_key)
+            response = anthropic_client.completion(
+                prompt=f"{anthropic.HUMAN_PROMPT} {prompt} {anthropic.AI_PROMPT}",
                 model=self.model,
-                prompt=f"{anthropic.HUMAN_PROMPT} What are the flaws and weaknesses in the following argument: {response}? {anthropic.AI_PROMPT} Respond in no more than three lines, without bullet points or full explanations. Speak informally, as if you are an individual having a casual conversation with another individual. Directly address the other agent's points.",
                 max_tokens_to_sample=40
             )
-            return response.completion.strip()
+            return response["completion"]
+
         elif self.company == "Gemini":
             genai.configure(api_key=self.api_key)
             model = genai.GenerativeModel(self.model)
-            response = model.generate_content(f"What are the flaws and weaknesses in the following argument: {response}? Respond in no more than three lines, without bullet points or full explanations. Speak informally, as if you are an individual having a casual conversation with another individual. Directly address the other agent's points.", generation_config={"max_output_tokens": 40})
-            return response.text.strip()
+            response = model.generate_content(
+                prompt,
+                generation_config = { "max_output_tokens": 40 }
+            )
+            if response and hasattr(response, "text"):
+                return response.text
+            return "Response blocked or no text generated."
+
         else:
             return f"Error: Unsupported company {self.company}"
 
     def respond_to_critique(self, critique):
+        prompt = (
+            f"Defend your position and counter the following critique: {critique} "
+            f"Respond in no more than two lines, without bullet points or full explanations. "
+            f"Speak informally, as if you are an individual having a casual conversation. "
+            f"Directly address the other agent's points."
+        )
+
         if self.company == "OpenAI":
             openai.api_key = self.api_key
-            response = openai.completions.create(
+            response = openai.Completion.create(
                 model=self.model,
-                prompt=f"Defend your position and counter the following critique: {critique} Respond in no more than three lines, without bullet points or full explanations. Speak informally, as if you are an individual having a casual conversation with another individual. Directly address the other agent's points.",
+                prompt=prompt,
                 max_tokens=40
             )
-            return response.choices[0].text.strip()
+            return response.choices[0].text
+
         elif self.company == "Anthropic":
-            anthropic_client = anthropic.Anthropic(api_key=self.api_key)
-            response = anthropic_client.completions.create(
+            anthropic_client = anthropic.Client(api_key=self.api_key)
+            response = anthropic_client.completion(
+                prompt=f"{anthropic.HUMAN_PROMPT} {prompt} {anthropic.AI_PROMPT}",
                 model=self.model,
-                prompt=f"{anthropic.HUMAN_PROMPT} Defend your position and counter the following critique: {critique} {anthropic.AI_PROMPT} Respond in no more than three lines, without bullet points or full explanations. Speak informally, as if you are an individual having a casual conversation with another individual. Directly address the other agent's points.",
                 max_tokens_to_sample=40
             )
-            return response.completion.strip()
+            return response["completion"]
+
         elif self.company == "Gemini":
             genai.configure(api_key=self.api_key)
             model = genai.GenerativeModel(self.model)
-            response = model.generate_content(f"Defend your position and counter the following critique: {critique} Respond in no more than three lines, without bullet points or full explanations. Speak informally, as if you are an individual having a casual conversation with another individual. Directly address the other agent's points.", generation_config={"max_output_tokens": 40})
-            return response.text.strip()
+            response = model.generate_content(
+                prompt,
+                generation_config = { "max_output_tokens": 40 }
+            )
+            if response and hasattr(response, "text"):
+                return response.text
+            return "Response blocked or no text generated."
+
         else:
             return f"Error: Unsupported company {self.company}"
+
+    def receive_vote(self, vote_key):
+        self.votes.append(vote_key)
 
     def debate(self, topic, conversation_history=None):
         if conversation_history is None:
             conversation_history = []
-        
+
+        vote_info = ""
+        if self.votes:
+            vote_info = f"You have received these votes so far: {', '.join(self.votes)}. "
+
         if not conversation_history:
-            prompt = f"Debate the following topic: {topic}. You should strongly disagree with the other agent and find flaws in their arguments. Do not agree with the other agent. Respond in no more than three lines, without bullet points or full explanations. Speak informally, as if you are an individual having a casual conversation with another individual. Directly address the other agent's points."
-            if self.company == "OpenAI":
-                openai.api_key = self.api_key
-                response = openai.completions.create(
-                    model=self.model,
-                    prompt=prompt,
-                    max_tokens=50
-                )
-                return response.choices[0].text.strip()
-            elif self.company == "Anthropic":
-                anthropic_client = anthropic.Anthropic(api_key=self.api_key)
-                response = anthropic_client.completions.create(
-                    model=self.model,
-                    prompt=f"{anthropic.HUMAN_PROMPT} {prompt} {anthropic.AI_PROMPT}",
-                    max_tokens_to_sample=50
-                )
-                return response.completion.strip()
-            elif self.company == "Gemini":
-                genai.configure(api_key=self.api_key)
-                model = genai.GenerativeModel(self.model)
-                response = model.generate_content(prompt, generation_config={"max_output_tokens": 50})
-                if response and hasattr(response, 'parts'):
-                    text_parts = [part.text for part in response.parts if hasattr(part, 'text') and part.text]
-                    if text_parts:
-                        return " ".join(text_parts).strip()
-                return "Response blocked due to safety reasons or no text was generated."
-            else:
-                return f"Error: Unsupported company {self.company}"
+            prompt = (
+                f"Debate the following topic: {topic}. "
+                f"You must directly and strongly strongly disagree with the other agent and find flaws in their arguments and provide logical reasons to reject their arguments. be very direct in your disagreement. "
+                f"don't mention anything that supports his argumetns , and don't let him win this argument "
+                f"Respond in no more than two lines, without bullet points or full explanations. "
+                f"Speak informally, as if you are an individual having a casual conversation. "
+                f"Directly address the other agent's points."
+            )
+            return self._run_completion(prompt)
         else:
             last_turn = conversation_history[-1]
-            critique = self.critique(last_turn['text'])
-            response = self.respond_to_critique(critique)
-            return response
+            critique_text = self.critique(last_turn["text"])
+            response_text = self.respond_to_critique(critique_text)
+            return response_text
+
+    def _run_completion(self, prompt):
+        if self.company == "OpenAI":
+            openai.api_key = self.api_key
+            response = openai.Completion.create(
+                model=self.model,
+                prompt=prompt,
+                max_tokens=50
+            )
+            return response.choices[0].text
+
+        elif self.company == "Anthropic":
+            anthropic_client = anthropic.Client(api_key=self.api_key)
+            response = anthropic_client.completion(
+                prompt=f"{anthropic.HUMAN_PROMPT} {prompt} {anthropic.AI_PROMPT}",
+                model=self.model,
+                max_tokens_to_sample=50
+            )
+            return response["completion"]
+
+        elif self.company == "Gemini":
+            genai.configure(api_key=self.api_key)
+            model = genai.GenerativeModel(self.model)
+            response = model.generate_content(
+                prompt,
+                generation_config = { "max_output_tokens": 50 }
+            )
+            if response and hasattr(response, "text"):
+                return response.text
+            return "Response blocked or no text generated."
+
+        else:
+            return f"Error: Unsupported company {self.company}"
