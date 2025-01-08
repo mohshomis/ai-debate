@@ -63,10 +63,13 @@ if st.session_state.page == "main":
                 agent_colors[agent_data.name] = colors[i % len(colors)]
             
             # Render the interaction
-            summary_points = interaction_controls(
-                st.session_state.interaction,
-                agent_colors
-            )
+            if st.session_state.interaction:
+                summary_points = interaction_controls(
+                    st.session_state.interaction,
+                    agent_colors
+                )
+            else:
+                st.warning("No interaction to display.")
         else:
             st.warning("Please add agents in the Settings page.")
 
