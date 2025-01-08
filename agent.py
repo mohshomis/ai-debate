@@ -44,7 +44,7 @@ class Agent:
                 prompt,
                 generation_config = { "max_output_tokens": 50 }
             )
-            if response and hasattr(response, "text"):
+            if hasattr(response, "text"):
                 return response.text
             return "Response blocked or no text generated."
 
